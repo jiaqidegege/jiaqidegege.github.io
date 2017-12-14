@@ -103,7 +103,7 @@
 <link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="test," />
+  <meta name="keywords" content="JavaScript 对象," />
 
 
 
@@ -119,18 +119,20 @@
 
 
 
-<meta name="description" content="personal blog|javascript|front and end">
-<meta name="keywords" content="test">
+<meta name="description" content="一认识ECMAScript内置对象，本地对象，宿主对象1.定义本地对象官方定义：独立于宿主对象，由ECMAscript实现提供的对象内置对象官方定义：独立于宿主对象，由ECMAScript实现提供的对象，在ECMASript开始执行时创建宿主对象官方定义：由ECMAScript实现的宿主环境提供的对象 比较抽象，翻译一下： 本地对象：就是JavaScript中的所有引用类型，包括Number St">
+<meta name="keywords" content="JavaScript 对象">
 <meta property="og:type" content="article">
-<meta property="og:title" content="test-post">
-<meta property="og:url" content="http://chasemt.com/2017/08/31/test-post/index.html">
+<meta property="og:title" content="全面了解JavaScript中的对象">
+<meta property="og:url" content="http://chasemt.com/2017/09/08/全面了解JavaScript中的对象/index.html">
 <meta property="og:site_name" content="chasemt">
-<meta property="og:description" content="personal blog|javascript|front and end">
+<meta property="og:description" content="一认识ECMAScript内置对象，本地对象，宿主对象1.定义本地对象官方定义：独立于宿主对象，由ECMAscript实现提供的对象内置对象官方定义：独立于宿主对象，由ECMAScript实现提供的对象，在ECMASript开始执行时创建宿主对象官方定义：由ECMAScript实现的宿主环境提供的对象 比较抽象，翻译一下： 本地对象：就是JavaScript中的所有引用类型，包括Number St">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2017-08-31T17:25:35.229Z">
+<meta property="og:image" content="http://img.blog.csdn.net/20130624221901250?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvZm9hbWZsb3dlcg==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
+<meta property="og:updated_time" content="2017-12-14T01:45:26.073Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="test-post">
-<meta name="twitter:description" content="personal blog|javascript|front and end">
+<meta name="twitter:title" content="全面了解JavaScript中的对象">
+<meta name="twitter:description" content="一认识ECMAScript内置对象，本地对象，宿主对象1.定义本地对象官方定义：独立于宿主对象，由ECMAscript实现提供的对象内置对象官方定义：独立于宿主对象，由ECMAScript实现提供的对象，在ECMASript开始执行时创建宿主对象官方定义：由ECMAScript实现的宿主环境提供的对象 比较抽象，翻译一下： 本地对象：就是JavaScript中的所有引用类型，包括Number St">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20130624221901250?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvZm9hbWZsb3dlcg==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
 
 
 
@@ -160,13 +162,13 @@
 
 
 
-  <link rel="canonical" href="http://chasemt.com/2017/08/31/test-post/"/>
+  <link rel="canonical" href="http://chasemt.com/2017/09/08/全面了解JavaScript中的对象/"/>
 
 
 
 
 
-  <title>test-post | chasemt</title>
+  <title>全面了解JavaScript中的对象 | chasemt</title>
   
 
 
@@ -303,7 +305,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://chasemt.com/2017/08/31/test-post/">
+    <link itemprop="mainEntityOfPage" href="http://chasemt.com/2017/09/08/全面了解JavaScript中的对象/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="jiaqidegege">
@@ -320,7 +322,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">test-post</h1>
+          <h1 class="post-title" itemprop="name headline">全面了解JavaScript中的对象</h1>
         
 
         <div class="post-meta">
@@ -332,8 +334,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-08-31T20:49:31+08:00">
-                2017-08-31
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-08T19:39:31+08:00">
+                2017-09-08
               </time>
             
 
@@ -370,7 +372,19 @@
       
 
       
-        
+        <h2 id="一认识ECMAScript内置对象，本地对象，宿主对象"><a href="#一认识ECMAScript内置对象，本地对象，宿主对象" class="headerlink" title="一认识ECMAScript内置对象，本地对象，宿主对象"></a>一认识ECMAScript内置对象，本地对象，宿主对象</h2><h3 id="1-定义"><a href="#1-定义" class="headerlink" title="1.定义"></a>1.定义</h3><p>本地对象官方定义：独立于宿主对象，由ECMAscript实现提供的对象<br>内置对象官方定义：独立于宿主对象，由ECMAScript实现提供的对象，在ECMASript开始执行时创建<br>宿主对象官方定义：由ECMAScript实现的宿主环境提供的对象</p>
+<p>比较抽象，翻译一下：</p>
+<p><strong>本地对象</strong>：就是JavaScript中的所有引用类型，包括<br><code>Number String Boolean Array Date Math Functions RegExp Events Error</code>等<br><strong>内置对象</strong>：<code>Math Global</code><br>Global对象是所有全局变量和函数的占位符，它不是任何对象的属性，所以没有名称。在具体的环境中，比如在客户端浏览器中指的是window，node中是global。<br>global对象的属性包括JavaScript预先定义的一些顶层属性和函数，以及用户在顶层作用域中自定义的一些属性和函数<br>全局对象构成了全局作用域<br><strong>宿主对象</strong>：window document 以及用户自定义的对象</p>
+<h3 id="2-关系与区别"><a href="#2-关系与区别" class="headerlink" title="2.关系与区别"></a>2.关系与区别</h3><p>描述多个对象之间的关系和区别总是显得无比杂乱。也没有好的解决办法，在这里采用几个命题和一个图进行描述。</p>
+<ul>
+<li>内置对象是本地对象的子集</li>
+<li>内置对象在引擎初始化阶段就被创建（不需要实例化，直接调用），本地对象是在程序运行过程中动态创建（需要实例化）</li>
+<li>内置对象是一个对象，不是类，它既没有构造函数（<del>new Math（）</del>），也无法实例化一个新的内置对象<br><img src="http://img.blog.csdn.net/20130624221901250?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvZm9hbWZsb3dlcg==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt="此处输入图片的描述"></li>
+</ul>
+<p>  注：在JavaScript中，所有本地对象包括内置对象统一叫做标准（内置）对象。<br>&emsp;&emsp;javaScript由核心（ECMAScript）、文档对象模型（DOM）、浏览器对象模型（BOM）组成。</p>
+<h2 id="二JavaScript中的DOM和BOM"><a href="#二JavaScript中的DOM和BOM" class="headerlink" title="二JavaScript中的DOM和BOM"></a>二JavaScript中的DOM和BOM</h2><p>尽管很多书中都对DOM和BOM进行了介绍，但是都不太详细，仅仅提供了一些概念性的描述，导致我对DOM，BOM的印象只停留在document对象和window对象上，没有一个全局性的认识，在写原生js时遇到了很多问题。事实上，document，window都只是上述模型的接口之一，在这里，我将对DOM和BOM的接口作一个目录式的导航。</p>
+<h3 id="1-DOM："><a href="#1-DOM：" class="headerlink" title="1.DOM："></a>1.DOM：</h3><p>DOM对象包括document 元素对象 arrt对象</p>
+
       
     </div>
     
@@ -387,7 +401,7 @@
       
         <div class="post-tags">
           
-            <a href="/tags/test/" rel="tag"># test</a>
+            <a href="/tags/JavaScript-对象/" rel="tag"># JavaScript 对象</a>
           
         </div>
       
@@ -400,14 +414,18 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
+              <a href="/2017/09/05/学习react中的一些疑问/" rel="next" title="学习react中的一些疑问">
+                <i class="fa fa-chevron-left"></i> 学习react中的一些疑问
+              </a>
+            
           </div>
 
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2017/08/31/开心，纪念我的第一个博客/" rel="prev" title="开心，纪念我的第一个博客">
-                开心，纪念我的第一个博客 <i class="fa fa-chevron-right"></i>
+              <a href="/2017/09/09/JavaScript模块化开发/" rel="prev" title="JavaScript模块化开发">
+                JavaScript模块化开发 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -462,8 +480,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel sidebar-panel-active">
+      <section class="site-overview sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           
             <p class="site-author-name" itemprop="name">jiaqidegege</p>
@@ -553,6 +580,22 @@
 
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一认识ECMAScript内置对象，本地对象，宿主对象"><span class="nav-number">1.</span> <span class="nav-text">一认识ECMAScript内置对象，本地对象，宿主对象</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-定义"><span class="nav-number">1.1.</span> <span class="nav-text">1.定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-关系与区别"><span class="nav-number">1.2.</span> <span class="nav-text">2.关系与区别</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二JavaScript中的DOM和BOM"><span class="nav-number">2.</span> <span class="nav-text">二JavaScript中的DOM和BOM</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-DOM："><span class="nav-number">2.1.</span> <span class="nav-text">1.DOM：</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
