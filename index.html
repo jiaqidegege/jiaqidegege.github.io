@@ -302,6 +302,848 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://chasemt.com/2017/12/14/由图片预加载引出的浏览器渲染问题/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="jiaqidegege">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="chasemt">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/12/14/由图片预加载引出的浏览器渲染问题/" itemprop="url">未命名</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-14T09:27:24+08:00">
+                2017-12-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="由图片预加载引出的浏览器渲染问题"><a href="#由图片预加载引出的浏览器渲染问题" class="headerlink" title="由图片预加载引出的浏览器渲染问题"></a>由图片预加载引出的浏览器渲染问题</h1><p>标签（空格分隔）： 未分类</p>
+<hr>
+<h2 id="一，先说结论："><a href="#一，先说结论：" class="headerlink" title="一，先说结论："></a>一，先说结论：</h2><h3 id="1-css文件的影响"><a href="#1-css文件的影响" class="headerlink" title="1.css文件的影响"></a>1.css文件的影响</h3><p>css不会阻塞HTML的解析但是会阻塞渲染<br>css放在head是为了页面获得样式后再渲染<br>为了加快首屏出现的时间，可以把和首屏无关的样式放在尾部</p>
+<h3 id="2-js文件的影响"><a href="#2-js文件的影响" class="headerlink" title="2.js文件的影响"></a>2.js文件的影响</h3><p>外部js放在首部可能导致HTML截断，也就是css已经下载好了开始渲染页面，但是后面的HTML解析被如果被可能很慢的js阻塞了,所以就更不用说渲染出来了。<br>js（内联）放在首部还可能导致请求到空元素.</p>
+<h3 id="3-图片资源的影响"><a href="#3-图片资源的影响" class="headerlink" title="3.图片资源的影响"></a>3.图片资源的影响</h3><p>图片会让页面的重绘，但不会影响HTML解析与页面渲染</p>
+<h2 id="二，浏览器的渲染过程"><a href="#二，浏览器的渲染过程" class="headerlink" title="二，浏览器的渲染过程"></a>二，浏览器的渲染过程</h2><ol>
+<li>Create/Update DOM And request css/image/js：浏览器请求到HTML代码后，在生成DOM的最开始阶段（应该是 Bytes → characters 后），并行发起css、图片、js的请求，无论他们是否在HEAD里。<br>注意：发起 js 文件的下载 request 并不需要 DOM 处理到那个 script 节点，比如：简单的正则匹配就能做到这一点，虽然实际上并不一定是通过正则：）。这是很多人在理解渲染机制的时候存在的误区。</li>
+<li>Create/Update Render CSSOM：CSS文件下载完成，开始构建CSSOM</li>
+<li>Create/Update Render Tree：所有CSS文件下载完成，CSSOM构建结束后，和 DOM 一起生成 Render Tree。</li>
+<li>Layout：有了Render Tree，浏览器已经能知道网页中有哪些节点、各个节点的CSS定义以及他们的从属关系。下一步操作称之为Layout，顾名思义就是计算出每个节点在屏幕中的位置。</li>
+<li>Painting：Layout后，浏览器已经知道了哪些节点要显示（which nodes are visible）、每个节点的CSS属性是什么（their computed styles）、每个节点在屏幕中的位置是哪里（geometry）。就进入了最后一步：Painting，按照算出来的规则，通过显卡，把内容画到屏幕上。<br><a href="https://segmentfault.com/a/1190000004292479" target="_blank" rel="external">相关链接</a></li>
+</ol>
+<h2 id="三，关于重排（reflow）和重绘-repaint"><a href="#三，关于重排（reflow）和重绘-repaint" class="headerlink" title="三，关于重排（reflow）和重绘(repaint)"></a>三，关于重排（reflow）和重绘(repaint)</h2><ol>
+<li>触发条件<br> 凡是会改变元素位置大小的操作都会引起重排，重排一定会引发重绘<br> 凡是改变元素“外表”的操作都会引起重绘，重绘不一定引起重排</li>
+<li>减少重排和重绘以提高性能<h2 id="四，图片预加载的应用场景"><a href="#四，图片预加载的应用场景" class="headerlink" title="四，图片预加载的应用场景"></a>四，图片预加载的应用场景</h2>1.图片预加载就是为了在空闲的时间里对将要用到（暂时不会下载，只有用到时（用户事件比如点击控制）再下载）的图片提前加载到缓存中<br>2.或者对于一个图片很多的页面先进行遮挡（比如进度条），等（用脚本控制）统一下载完在进行显示，防止因各张图片参差不齐造成不好的用户体验</li>
+</ol>
+<h2 id="五，关于渲染过程的疑问"><a href="#五，关于渲染过程的疑问" class="headerlink" title="五，关于渲染过程的疑问"></a>五，关于渲染过程的疑问</h2><p>由于目前知识范围的局限，尽管看了很多解释，仍然存在很多疑问，现在记录下来，方便日后探究</p>
+<ol>
+<li>三个时间点：dom树出现的时间点， 请求外部资源的时间点， 首屏出现的时间点</li>
+<li>外部资源对页面渲染的直接间接影响</li>
+<li>HTML解析和页面渲染的关系<br>总的来说：就是理清DOM树的构建——外部资源下载以及js执行——HTML的解析————页面的渲染呈现之间各种纷杂的关系</li>
+</ol>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://chasemt.com/2017/12/14/Front-end 面试问题/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="jiaqidegege">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="chasemt">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/12/14/Front-end 面试问题/" itemprop="url">未命名</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-14T09:26:51+08:00">
+                2017-12-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="Front-end-面试问题"><a href="#Front-end-面试问题" class="headerlink" title="Front-end 面试问题"></a>Front-end 面试问题</h1><p>标签（空格分隔）： front-end interview</p>
+<hr>
+<p>在此输入正文</p>
+<h2 id="1-HTML-Questions"><a href="#1-HTML-Questions" class="headerlink" title="1.HTML Questions"></a>1.HTML Questions</h2><h3 id="doctype-的用途"><a href="#doctype-的用途" class="headerlink" title="doctype 的用途"></a>doctype 的用途</h3><p>doctype 是 document type 的缩写。它被声明用来区分标准模式和怪异模式，也就是告诉浏览器该以怎样的模式去解析和渲染网页。在HTML5中，DOCTYPE的唯一作用就是启用标准模式</p>
+<h3 id="标准模式-、接近标准模式-、怪异模式的区别"><a href="#标准模式-、接近标准模式-、怪异模式的区别" class="headerlink" title="标准模式 、接近标准模式 、怪异模式的区别"></a>标准模式 、接近标准模式 、怪异模式的区别</h3><p>标准模式： 完全遵循HTML 和 css 规范进行布局<br>怪异模式： 布局模拟Netscape Navigator 4 和Internet Explorer 5中的非标准行为<br>接近标准模式： 有少量的特性是以怪异模式实现的，其他都遵循标准规范</p>
+<h3 id="HTML-和-XHTML-有什么区别"><a href="#HTML-和-XHTML-有什么区别" class="headerlink" title="HTML 和 XHTML 有什么区别"></a>HTML 和 XHTML 有什么区别</h3><p>XHTML是用XML的规则重新规范HTML，XHTML是XML的一个子集。XHTML对格式的要求比HTML更为严格：</p>
+<ul>
+<li>XHTML 要求正确嵌套</li>
+<li>XHTML 所有元素必须被正确关闭</li>
+<li>XHTML 区分大小写且元素名必须小写</li>
+<li>XHTML 属性值要用双引号且不能为空</li>
+<li>XHTML 在元素内容里不能有尖括号和&amp;，需要转义</li>
+</ul>
+<h3 id="以application-xhtml-xml-提供页面会出现哪些问题"><a href="#以application-xhtml-xml-提供页面会出现哪些问题" class="headerlink" title="以application/xhtml+xml 提供页面会出现哪些问题"></a>以application/xhtml+xml 提供页面会出现哪些问题</h3><p>由于XHTML/xml的语法规范比较严格，凡是没有完全遵循XML规范的页面都不会得到正常解析，导致用户得到无法阅读的页面，特别的，在IE中，声明application/xhtml+xml的页面会导致在IE8中显示一个未知格式的下载框，因为第一个支持XML的IE版本是IE9····</p>
+<h3 id="什么是data-属性？"><a href="#什么是data-属性？" class="headerlink" title="什么是data- 属性？"></a>什么是data- 属性？</h3><p>在前端框架变得流行之前，data-属性是作为自定义属性常用来存储一些页面数据。但是现在已经不鼓励使用，一是因为用户可以通过浏览器的审查元素轻松修改数据属性，二是现在有更好的解决方案————数据绑定。比如Vue中的双向绑定</p>
+<h3 id="HTML5相比上一版本有哪些变化要点"><a href="#HTML5相比上一版本有哪些变化要点" class="headerlink" title="HTML5相比上一版本有哪些变化要点"></a>HTML5相比上一版本有哪些变化要点</h3><ul>
+<li><strong>语义化</strong> 让你更准确的描述网页内容</li>
+<li><strong>离线浏览和客户端存储</strong> 更好的解决方案用于网页在客户端浏览器上存储数据以及更高效的离线操作方式</li>
+<li><strong>多媒体支持</strong> 让多媒体在网页上变得更加便于展示</li>
+<li><strong>2D/3D的图表和效果</strong> 使得展示效果变得更加多样化和绚丽</li>
+</ul>
+<h3 id="描述cookie、localStorage、sessionStorage的区别"><a href="#描述cookie、localStorage、sessionStorage的区别" class="headerlink" title="描述cookie、localStorage、sessionStorage的区别"></a>描述cookie、localStorage、sessionStorage的区别</h3><h3 id="描述-lt-script-gt-、-lt-script-async-gt-、-lt-script-defer-gt-的区别"><a href="#描述-lt-script-gt-、-lt-script-async-gt-、-lt-script-defer-gt-的区别" class="headerlink" title="描述&lt;script&gt;、&lt;script async&gt;、&lt;script defer&gt;的区别"></a>描述<code>&lt;script&gt;</code>、<code>&lt;script async&gt;</code>、<code>&lt;script defer&gt;</code>的区别</h3><p><code>&lt;script&gt;</code>标签会阻塞HTML解析，也就是说当页面HTML解析碰到script标签时，会停下来，并去获取脚本且立即执行，执行完毕后会恢复HTML解析<br>异步脚本的获取是和HTML解析并行执行的，一旦脚本获取完毕就立即执行，所以，异步脚本可能会在页面解析完成前执行完毕，因此，异步脚本不应依赖其他脚本。<br>延迟脚本的获取同样是和HTML解析并行执行，但执行却是在页面解析完成后，这样做适用于某些依赖于获取页面解析完成后的dom元素的脚本。延迟脚本不能包含document.write语句，当页面有多个延迟脚本时，按在页面的放置顺序执行，延迟脚本和将普通脚本放置在body标签后没有区别</p>
+<h3 id="为什么一般将css-link放在head中，而将script放在尾部"><a href="#为什么一般将css-link放在head中，而将script放在尾部" class="headerlink" title="为什么一般将css link放在head中，而将script放在尾部"></a>为什么一般将css link放在head中，而将script放在尾部</h3><p>link标签放在head中是规范的一部分，而且放在head中允许页面进行逐行渲染，这样能提高用户体验，如果放在尾部，在某些浏览器中可能会导致白屏，因为在样式表下载完成之前一些浏览器会阻止渲染以防止重绘。将link放在head中还可以防止文档样式闪烁。<br>script标签因为会阻塞HTML解析，因此常放在尾部。现在也可以使用放在头部的延迟脚本达到同样效果</p>
+<h2 id="2-CSS-Questions"><a href="#2-CSS-Questions" class="headerlink" title="2.CSS Questions"></a>2.CSS Questions</h2><h3 id="关于选择器的优先级及权重计算"><a href="#关于选择器的优先级及权重计算" class="headerlink" title="关于选择器的优先级及权重计算"></a>关于选择器的优先级及权重计算</h3><p>从CSS样式位置看优先级 ：内嵌样式 &gt; 内联样式 &gt; 外部样式<br>从选择器类型看优先级：important &gt; 内嵌样式（权值1000） &gt; id选择器（权值100） &gt; 类、伪类、属性选择器（10） &gt; 元素、伪元素选择器（1）</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://chasemt.com/2017/12/14/学习react中的一些疑问/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="jiaqidegege">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="chasemt">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/12/14/学习react中的一些疑问/" itemprop="url">未命名</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-14T09:25:28+08:00">
+                2017-12-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="学习react中的一些疑问"><a href="#学习react中的一些疑问" class="headerlink" title="学习react中的一些疑问"></a>学习react中的一些疑问</h1><p>标签（空格分隔）： react</p>
+<hr>
+<p>##1.react事件处理<br>Q： react为什么需要手动绑定this？<br>A:  1.  这是通过es6语法创建class组件中的问题，通过es5React.creatClass创建的组件会自动为组件内的方法绑定this<br>   &nbsp;&nbsp;&nbsp; 2.绑定this实际上是将方法绑定到组件实例，这样在事件处理函数中才能读取组件中定义的属性、 state、 方法<br>   &nbsp;&nbsp;&nbsp; 3.绑定this有三种方法，①在constructor中绑定②事件处理函数通过箭头函数回调③使用实验的属性初始化器语法</p>
+<p>Q： 事件处理函数后面加不加括号的区别？<br>详细描述见react文档中事件处理一节中“通常情况下如果你没有为方法后面添加（），你应该为它手动绑定this”</p>
+<p>Q： 为什么不绑定this，方法执行时的上下文是null/undefined而不是window或其他？</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://chasemt.com/2017/12/14/全面了解JavaScript中的对象/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="jiaqidegege">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="chasemt">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/12/14/全面了解JavaScript中的对象/" itemprop="url">未命名</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-14T09:24:33+08:00">
+                2017-12-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="全面了解JavaScript中的对象"><a href="#全面了解JavaScript中的对象" class="headerlink" title="全面了解JavaScript中的对象"></a>全面了解JavaScript中的对象</h1><p>标签（空格分隔）： JavaScript 对象</p>
+<hr>
+<h2 id="一认识ECMAScript内置对象，本地对象，宿主对象"><a href="#一认识ECMAScript内置对象，本地对象，宿主对象" class="headerlink" title="一认识ECMAScript内置对象，本地对象，宿主对象"></a>一认识ECMAScript内置对象，本地对象，宿主对象</h2><h3 id="1-定义"><a href="#1-定义" class="headerlink" title="1.定义"></a>1.定义</h3><p>本地对象官方定义：独立于宿主对象，由ECMAscript实现提供的对象<br>内置对象官方定义：独立于宿主对象，由ECMAScript实现提供的对象，在ECMASript开始执行时创建<br>宿主对象官方定义：由ECMAScript实现的宿主环境提供的对象</p>
+<p>比较抽象，翻译一下：</p>
+<p><strong>本地对象</strong>：就是JavaScript中的所有引用类型，包括<br><code>Number String Boolean Array Date Math Functions RegExp Events Error</code>等<br><strong>内置对象</strong>：<code>Math Global</code><br>Global对象是所有全局变量和函数的占位符，它不是任何对象的属性，所以没有名称。在具体的环境中，比如在客户端浏览器中指的是window，node中是global。<br>global对象的属性包括JavaScript预先定义的一些顶层属性和函数，以及用户在顶层作用域中自定义的一些属性和函数<br>全局对象构成了全局作用域<br><strong>宿主对象</strong>：window document 以及用户自定义的对象</p>
+<h3 id="2-关系与区别"><a href="#2-关系与区别" class="headerlink" title="2.关系与区别"></a>2.关系与区别</h3><p>描述多个对象之间的关系和区别总是显得无比杂乱。也没有好的解决办法，在这里采用几个命题和一个图进行描述。</p>
+<ul>
+<li>内置对象是本地对象的子集</li>
+<li>内置对象在引擎初始化阶段就被创建（不需要实例化，直接调用），本地对象是在程序运行过程中动态创建（需要实例化）</li>
+<li>内置对象是一个对象，不是类，它既没有构造函数（<del>new Math（）</del>），也无法实例化一个新的内置对象<br><img src="http://img.blog.csdn.net/20130624221901250?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvZm9hbWZsb3dlcg==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt="此处输入图片的描述"></li>
+</ul>
+<p>  注：在JavaScript中，所有本地对象包括内置对象统一叫做标准（内置）对象。<br>&emsp;&emsp;javaScript由核心（ECMAScript）、文档对象模型（DOM）、浏览器对象模型（BOM）组成。</p>
+<h2 id="二JavaScript中的DOM和BOM"><a href="#二JavaScript中的DOM和BOM" class="headerlink" title="二JavaScript中的DOM和BOM"></a>二JavaScript中的DOM和BOM</h2><p>尽管很多书中都对DOM和BOM进行了介绍，但是都不太详细，仅仅提供了一些概念性的描述，导致我对DOM，BOM的印象只停留在document对象和window对象上，没有一个全局性的认识，在写原生js时遇到了很多问题。事实上，document，window都只是上述模型的接口之一，在这里，我将对DOM和BOM的接口作一个目录式的导航。</p>
+<h3 id="1-DOM："><a href="#1-DOM：" class="headerlink" title="1.DOM："></a>1.DOM：</h3><p>DOM对象包括document 元素对象 arrt对象</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://chasemt.com/2017/12/14/JavaScript模块化开发/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="jiaqidegege">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="chasemt">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/12/14/JavaScript模块化开发/" itemprop="url">未命名</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-14T09:22:45+08:00">
+                2017-12-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="JavaScript模块化开发"><a href="#JavaScript模块化开发" class="headerlink" title="JavaScript模块化开发"></a>JavaScript模块化开发</h1><p>标签（空格分隔）： morder </p>
+<hr>
+<p>今天在学习jQuery插件封装的时候，了解了一下JavaScript的模块化开发，现整理如下：</p>
+<h2 id="1-什么是JavaScript模块化开发？"><a href="#1-什么是JavaScript模块化开发？" class="headerlink" title="1. 什么是JavaScript模块化开发？"></a>1. 什么是JavaScript模块化开发？</h2><p>模块化开发是一种代码组织方式，用来管理组织越来越庞大复杂的代码之间的关系；</p>
+<h2 id="2-模块化是做什么用的，或者说解决什么问题？"><a href="#2-模块化是做什么用的，或者说解决什么问题？" class="headerlink" title="2. 模块化是做什么用的，或者说解决什么问题？"></a>2. 模块化是做什么用的，或者说解决什么问题？</h2><ul>
+<li>命名冲突：当项目由团队进行协作开发的时候，不同开发人员的变量和函数命名可能相同；即使是一个开发，当开发周期比较长的时候，也有可能会忘记之前使用了什么变量，从而导致重复命名，导致命名冲突</li>
+<li>文件依赖：代码重用产生了文件之间的依赖关系，比如引入文件的顺序，数目，当项目变得庞大时，这些会变得越来越难以维护。</li>
+</ul>
+<h2 id="3-一个模块化系统应该实现什么功能？"><a href="#3-一个模块化系统应该实现什么功能？" class="headerlink" title="3. 一个模块化系统应该实现什么功能？"></a>3. 一个模块化系统应该实现什么功能？</h2><p>在了解了模块化的作用后，不难发现，我们要想实现一个模块化系统，应当具有以下三个功能：</p>
+<ul>
+<li>创建模块</li>
+<li>导入模块/导入依赖</li>
+<li>导出模块/定义外部接口</li>
+</ul>
+<h2 id="4-js模块的规范"><a href="#4-js模块的规范" class="headerlink" title="4.js模块的规范"></a>4.js模块的规范</h2><p>模块化要想起作用，还得有一个统一的开发规范，要不然就没有实际意义了，就像大家如果都说方言，谁都听不懂谁，所以有了普通话。一个统一的规范有利于可交换性和可移植性，现在被广泛支持的主要有两种规范：<br><strong>commonjs</strong> 和 <strong>AMD</strong>。</p>
+<h3 id="commonjs"><a href="#commonjs" class="headerlink" title="commonjs"></a>commonjs</h3><h4 id="CommonJS定义了如下接口："><a href="#CommonJS定义了如下接口：" class="headerlink" title="CommonJS定义了如下接口："></a>CommonJS定义了如下接口：</h4><ol>
+<li>一个全局性的require方法。用来导入模块，例如：<br><code>require（jQuery） //导入jQuery模块</code></li>
+<li><p>module对象 。每个模块都有一个module对象，module对象下有一个experts属性，用来表示当前模块对外输出的接口。例如：</p>
+<figure class="highlight plain"><figcaption><span>&#123;</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">    a:function()&#123;&#125;,</div><div class="line">    b:function()&#123;&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>experts对象 。 为了方便，还可以使用experts对象导出模块，例如：<br><code>experts.a = function(){}</code></p>
+</li>
+</ol>
+<h3 id="AMD"><a href="#AMD" class="headerlink" title="AMD"></a>AMD</h3><h4 id="AMD定义了如下接口："><a href="#AMD定义了如下接口：" class="headerlink" title="AMD定义了如下接口："></a>AMD定义了如下接口：</h4><ol>
+<li>一个全局性的define方法。API如下：<br>define（id？，dependencies?, factory）</li>
+</ol>
+<ul>
+<li>id string类型 用来定义模块名，一般省略</li>
+<li>depenencies Array类型 用于定义依赖模块，成员是模块名</li>
+<li>factory function类型 一个回调函数，在依赖的模块加载成功后，会执行这个回调函数，它的参数是所有依赖模块的引用，如果回调函数有返回值，会导出出来</li>
+</ul>
+<h3 id="CMD"><a href="#CMD" class="headerlink" title="CMD"></a>CMD</h3><h4 id="CMD定义了如下接口："><a href="#CMD定义了如下接口：" class="headerlink" title="CMD定义了如下接口："></a>CMD定义了如下接口：</h4><p>define（factory）</p>
+<h2 id="5-模块规范的实现"><a href="#5-模块规范的实现" class="headerlink" title="5. 模块规范的实现"></a>5. 模块规范的实现</h2><p>实现CommonJS的主要有 Node.js<br>实现AMD的主要有require.js<br>实现CMD的主要有 Sea.js</p>
+<h2 id="6-require-js-Sea-js的使用介绍即示例"><a href="#6-require-js-Sea-js的使用介绍即示例" class="headerlink" title="6. require.js/Sea.js的使用介绍即示例"></a>6. require.js/Sea.js的使用介绍即示例</h2><h2 id="7-如何定义一个支持上述所有规范并且同时兼容原生js的模块"><a href="#7-如何定义一个支持上述所有规范并且同时兼容原生js的模块" class="headerlink" title="7. 如何定义一个支持上述所有规范并且同时兼容原生js的模块"></a>7. 如何定义一个支持上述所有规范并且同时兼容原生js的模块</h2><h2 id="8-参考文献"><a href="#8-参考文献" class="headerlink" title="8. 参考文献"></a>8. 参考文献</h2><p><a href="https://segmentfault.com/a/1190000000733959" target="_blank" rel="external">1. 详解JavaScript模块化开发</a><br><a href="http://caibaojian.com/javascript-module.html" target="_blank" rel="external">2. JavaScript中的模块化开发</a><br><a href="http://www.ruanyifeng.com/blog/2012/10/asynchronous_module_definition.html" target="_blank" rel="external">3. Javascript模块化编程</a><br><a href="http://javascript.ruanyifeng.com/nodejs/module.html#toc2" target="_blank" rel="external">4. CommonJS规范</a><br><a href="http://www.tangshuang.net/2015.html" target="_blank" rel="external">5. OMD: javascript模块化加载兼容CommonJS, AMD, CMD 以及 原生 JS</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://chasemt.com/2017/12/14/git 常用命令/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="jiaqidegege">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="chasemt">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/12/14/git 常用命令/" itemprop="url">未命名</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-14T09:21:58+08:00">
+                2017-12-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="git-常用命令"><a href="#git-常用命令" class="headerlink" title="git 常用命令"></a>git 常用命令</h1><h2 id="标签（空格分隔）：-git-git-command"><a href="#标签（空格分隔）：-git-git-command" class="headerlink" title="标签（空格分隔）： git git-command"></a>标签（空格分隔）： git git-command</h2><h3 id="1-常用命令"><a href="#1-常用命令" class="headerlink" title="1.常用命令"></a>1.常用命令</h3><p><img src="http://stormzhang.com/image/ssh.png" alt="常用命令"></p>
+<h3 id="2-一个本地代码库操作流程示范"><a href="#2-一个本地代码库操作流程示范" class="headerlink" title="2. 一个本地代码库操作流程示范"></a>2. 一个本地代码库操作流程示范</h3><ul>
+<li><strong>创建一个文件夹test:</strong>  <code>mkdir test</code></li>
+<li><strong>切换到创建的目录test:</strong> <code>cd test</code></li>
+<li><strong>将该目录初始化为一个git仓库:</strong> <code>git init</code></li>
+<li><strong>新建一个a.md文件:</strong> <code>touch a.md</code></li>
+<li><strong>将a.md加入git仓库的缓存:</strong> <code>git add a.md</code></li>
+<li><strong>//将缓存中的a.md删除:</strong><code>git rm cached</code></li>
+<li><strong>将a.md正式提交到仓库 -m代表提交信息:</strong> <code>git commit -m &#39;first commit&#39;</code></li>
+<li><strong>查看仓库状态信息，比如有什么文件待缓存，待提交之类的:</strong> <code>git states</code></li>
+<li><strong>查看commit信息 可以看到提交人，提交人邮箱 ，提交信息:</strong> <code>git log</code></li>
+<li><strong>创建当前分支（master）的一个分支a:</strong><code>git branch a</code> </li>
+<li><strong>将当前工作分支切换到分支a:</strong><code>git checkout a</code> </li>
+<li><strong>//上述两个命令可以合并成:</strong> <code>git checkout -b a</code></li>
+<li><strong>为当前分支创建一个v1.0标签</strong><code>git tag v1.0</code></li>
+<li><strong>切换到标签为v2.0的代码:</strong><code>git checkout v2.0</code></li>
+<li><strong>将当前分支合并到主干分支master:</strong><code>git merge</code></li>
+<li><strong>删除当前分支:</strong><code>git branch -d</code></li>
+<li><strong>强制删除当前分支，用于当前分支还有未合并的改动的情况:</strong><code>git branch -D</code></li>
+</ul>
+<h3 id="3-一个关联远程GitHub代码库流程示范"><a href="#3-一个关联远程GitHub代码库流程示范" class="headerlink" title="3.一个关联远程GitHub代码库流程示范"></a>3.一个关联远程GitHub代码库流程示范</h3><ul>
+<li><strong>生成ssh秘钥：</strong> <code>ssh-keygen -t rsa</code></li>
+<li><strong>github上添加ssh公钥：</strong></li>
+<li><p><strong>取得github上的代码库:</strong><a href="http://www.ruanyifeng.com/blog/2014/06/git_remote.html" target="_blank" rel="external">相关链接:git 远程操作详解</a></p>
+  <table><br>      <tr><br>          <th>clone</th><br>          <th>fetch</th><br>          <th>pull</th><br>      </tr><br>      <tr><br>          <td>将远程<b>整个代码库</b>克隆到本地并自动取得关联</td><br>          <td>取得远程代码库的<b>某个分支</b></td><br>          <td>取得远程分支并自动与本地分支<b>合并</b></td><br>      </tr><br>  </table></li>
+<li><strong>查看远程主机信息：</strong> remote</li>
+<li><strong>将本地代码库与远程代码库关联:</strong> <code>git branch --set-upstream master orign/next</code></li>
+<li><strong>将本地分支与远程分支合并：</strong> push</li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://chasemt.com/2017/08/31/开心，纪念我的第一个博客/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -570,7 +1412,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
